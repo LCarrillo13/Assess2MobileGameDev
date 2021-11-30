@@ -21,7 +21,16 @@ public class Key : MonoBehaviour
         
     }
 
-    private void OnCollisionEnter(Collision other)
+    // private void OnCollisionEnter(Collision other)
+    // {
+    //     if(other.gameObject.CompareTag("Player"))
+    //     {
+    //         Destroy(door);
+    //         Destroy(thisKey);
+    //     }
+    // }
+
+    private void OnTriggerEnter(Collider other)
     {
         if(other.gameObject.CompareTag("Player"))
         {

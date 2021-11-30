@@ -20,22 +20,49 @@ public class PlayerController : MonoBehaviour
     public float tiltSpeed = 5f;
     public float maxTiltAngle = 45f;
     // Health stuff
-    private int playerHealth = 100;
+    [SerializeField] public int playerHealth = 100;
     private int maxHealth = 100;
-    [SerializeField] private Text healthText;
-    [SerializeField] private Transform spawnPoint;
+    [SerializeField] public Text healthText;
+    [SerializeField] public Transform spawnPoint;
+    //UI stuff
+    [SerializeField] public GameObject deathPanel;
     // Mobile stuff
     private JoystickInputHandler joystickInputHandler;
+    // Other stuff
+    [SerializeField] public GameObject playerObj;
+    public Vector3 spawnVector = new Vector3(10, 13, 31);
+    public MobileInputManager mobileInputManager;
+    public Vector2 joystickAxis;
+    
+   
+    
     
     
     
 #region Setup
-    private void Awake()
+    public void Awake()
     {
+       
+        mobileInputManager = FindObjectOfType<MobileInputManager>();
         characterController = GetComponent<CharacterController>();
-        //Cursor.lockState = CursorLockMode.Locked;
-       // Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
        joystickInputHandler = FindObjectOfType<JoystickInputHandler>();
+       if(spawnPoint == null)
+       {
+           spawnPoint = GameObject.FindGameObjectWithTag("Respawn").transform;
+       }
+       deathPanel.gameObject.SetActive(false);
+       
+    }
+    
+    // Update is called once per frame
+    void Update()
+    {
+        
+        MovePlayer();
+        // stuff
+        joystickAxis = MobileInputManager.GetJoystickAxis();
     }
 
 #endregion
@@ -43,19 +70,21 @@ public class PlayerController : MonoBehaviour
 #region Movement Stuff
     void MovePlayer()
     {
+        
         // Forward Back Left Right movement
-        float currentSpeed = IsRunning()
-            ? runSpeed
-            : walkSpeed;
-        float forwardSpeed = ForwardDirection() * currentSpeed;
-        Vector3 movementDirection = (transform.forward * forwardSpeed)+(transform.right*SidewaysDirection()*strafeSpeed);
-        characterController.Move(movementDirection * Time.deltaTime);
-        // Rotational movement
-        transform.rotation *= Quaternion.Euler(0,RotationY()*rotationalSpeed,0);
-        // Tilt camera
-        cameraRotation += TiltCamera() * tiltSpeed;
-        cameraRotation = Mathf.Clamp(cameraRotation, -maxTiltAngle, maxTiltAngle);
-        playerCamera.transform.localRotation = Quaternion.Euler(cameraRotation,0,0);
+            float currentSpeed = IsRunning()
+                ? runSpeed
+                : walkSpeed;
+            float forwardSpeed = ForwardDirection() * currentSpeed;
+            Vector3 movementDirection = (transform.forward * forwardSpeed) + (transform.right * SidewaysDirection() * strafeSpeed);
+            characterController.Move(movementDirection * Time.deltaTime);
+            // Rotational movement
+            transform.rotation *= Quaternion.Euler(0, (joystickAxis.x) * rotationalSpeed, 0);
+            // Tilt camera
+            cameraRotation += (-joystickAxis.y) * tiltSpeed;
+            cameraRotation = Mathf.Clamp(cameraRotation, -maxTiltAngle, maxTiltAngle);
+            playerCamera.transform.localRotation = Quaternion.Euler(cameraRotation, 0, 0);
+        
     }
 
     bool IsRunning()
@@ -156,14 +185,16 @@ public class PlayerController : MonoBehaviour
 
     float RotationY()
     {
-        return joystickInputHandler.Axis.x;
-        return Mathf.Clamp(Input.GetAxis("Mouse X") + joystickInputHandler.Axis.x,-1,1);
+        return joystickAxis.x * Time.deltaTime;
+        //return Mathf.Clamp(Input.GetAxis("Mouse X") + joystickInputHandler.Axis.x,-1,1);
     }
 
     float TiltCamera()
     {
-        return -joystickInputHandler.Axis.y;
-        return Mathf.Clamp( -Input.GetAxis("Mouse Y") + -joystickInputHandler.Axis.y,-1,1);
+        return (-joystickAxis.y) * Time.deltaTime;
+
+       // return (-joystickInputHandler.Axis.y);
+        //return Mathf.Clamp( -Input.GetAxis("Mouse Y") + -joystickInputHandler.Axis.y,-1,1);
     }
     
 #endregion
@@ -172,34 +203,75 @@ public class PlayerController : MonoBehaviour
     
     void LoseHealth()
     {
+        Debug.Log("Health lost");
         playerHealth -= 10;
+        healthText.text = playerHealth.ToString();
         if(playerHealth < 10)
         {
             PlayerDie();
+            CantMove();
+            //Respawn();
+            
         }
-        //TODO UI Update
+        
     }
 
     void PlayerDie()
     {
-        transform.position = spawnPoint.position;
+        //transform.position = spawnPoint.position;
+        //Respawn();
+        deathPanel.gameObject.SetActive(true);
+        //CantMove();
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         playerHealth = maxHealth;
-        //TODO UI Update
+        healthText.text = playerHealth.ToString();
+        Debug.Log("Player Die");
+        
+    }
+
+    void CantMove()
+    {
+        walkSpeed = 0f;
+        runSpeed = 0f;
+        strafeSpeed = 0f;
+        rotationalSpeed = 0f;
+        characterController.enabled = false;
+    }
+    public void Respawn()
+    {
+        Debug.Log("Player respawn");
+        // playerObj.transform.parent.position = spawnPoint.position;
+        // playerObj.transform.parent.rotation = spawnPoint.rotation;
+        // playerObj.transform.position = spawnPoint.position;
+        // playerObj.transform.rotation = spawnPoint.rotation;
+        //transform.position = transform.
+            //spawnPoint.TransformPoint(0, 0, 0);
+            transform.position = transform.TransformPoint(spawnVector);
+            transform.rotation = spawnPoint.rotation;
+
+            deathPanel.gameObject.SetActive(false);
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 #endregion
     
-   
-    // Update is called once per frame
-    void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        MovePlayer();
-    }
-
-    private void OnCollisionEnter(Collision other)
-    {
-        if(other.gameObject.CompareTag("Enemy"))
+        if(other.CompareTag("Enemy"))
         {
             LoseHealth();
+            Debug.Log("Hit by enemy");
         }
     }
+
+    // private void OnCollisionEnter(Collision other)
+    //  {
+    //      if(other.collider.CompareTag("Enemy"))
+    //      {
+    //          LoseHealth();
+    //          Debug.Log("Hit by enemy");
+    //      }
+    //  }
 }

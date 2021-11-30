@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public class Gun : MonoBehaviour
 {
@@ -11,12 +13,17 @@ public class Gun : MonoBehaviour
     public int currentAmmo;
     public int gunPower = 20;
     
+    // UI 
+    [SerializeField] public Text ammoText;
+    
     
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        maxAmmo = 10;
+        currentAmmo = maxAmmo;
+        ammoText.text = currentAmmo.ToString();
     }
 
     // Update is called once per frame
@@ -24,7 +31,22 @@ public class Gun : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0))
         {
-            FireGun();
+            if(currentAmmo > 0)
+            {
+                FireGun();
+            }
+            
+        }
+
+        if(Input.GetKeyDown(KeyCode.R))
+        {
+            StartCoroutine(ReloadTime());
+        }
+
+        if(currentAmmo < 0)
+        {
+            currentAmmo = 0;
+            ammoText.text = currentAmmo.ToString();
         }
     }
 
@@ -51,10 +73,35 @@ public class Gun : MonoBehaviour
         {
             hit.transform.GetComponent<Enemy>().TakeDamage(gunPower);
         }
+        UseAmmo();
     }
 
     public void OnFireButtonPress()
     {
         FireGun();
+    }
+    
+    public void OnReloadButtonPress()
+    {
+        StartCoroutine(ReloadTime());
+    }
+
+    void UseAmmo()
+    {
+        currentAmmo--;
+        ammoText.text = currentAmmo.ToString();
+    }
+
+    void Reload()
+    {
+        currentAmmo = maxAmmo;
+        ammoText.text = currentAmmo.ToString();
+    }
+
+    IEnumerator ReloadTime()
+    {
+        ammoText.text = "R";
+        yield return new WaitForSeconds(1f);
+        Reload();
     }
 }

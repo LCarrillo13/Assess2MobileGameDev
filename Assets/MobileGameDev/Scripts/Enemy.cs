@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour
 {
     public int maxHealth = 100;
 
     public int health;
+    //public EnemyHealthBar enemyHealthBar;
 
     private NavMeshAgent navMeshAgent;
     private PlayerController player;
@@ -77,12 +79,14 @@ private void Awake()
     {
         health = maxHealth;
         navMeshAgent = GetComponent<NavMeshAgent>();
-        player = GameObject.FindObjectOfType<PlayerController>();
+        player = FindObjectOfType<PlayerController>();
+        //enemyHealthBar = GetComponentInChildren<EnemyHealthBar>();
     }
 
     public void TakeDamage(int damageAmmount)
     {
         health -= damageAmmount;
+        gameObject.GetComponentInChildren<EnemyHealthBar>().Decrease();
         if(health <= 0)
         {
             Die();
@@ -120,4 +124,20 @@ private void Awake()
                 break;
         }
     }
+
+    // private void OnCollisionEnter(Collision other)
+    // {
+    //     if(other.collider.CompareTag("Player"))
+    //     {
+    //         Debug.Log("touched player");
+    //         player.playerHealth -= 10;
+    //         player.healthText.text = player.playerHealth.ToString();
+    //         if(player.playerHealth < 10)
+    //         {
+    //             player.transform.position = player.spawnPoint.position;
+    //             player.transform.rotation = player.spawnPoint.rotation;
+    //             
+    //         }
+    //     }
+    // }
 }

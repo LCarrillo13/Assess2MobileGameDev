@@ -6,15 +6,17 @@ using UnityEngine.SceneManagement;
 
 public class Portal : MonoBehaviour
 {
-    
-
-    private void OnCollisionEnter(Collision other)
+    private void OnTriggerEnter(Collider other)
     {
         if(other.gameObject.CompareTag("Player"))
         {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             LoadScene("EndGame");
-        }
+        } 
     }
+
+   
     
     public void LoadScene(string SceneName)
     {
